@@ -440,6 +440,33 @@ export class System {
       return [];
     }
   }
+
+  async getDisableTimes(doctorId: string): Promise<string[]> {
+    const db = getDatabase();
+    const appointmentsRef = ref(db, 'appointments');
+    
+    try {
+      const snapshot = await get(appointmentsRef);
+      if (!snapshot.exists()) return [];
+  
+      const appointments = snapshot.val();
+      const disabledTimes: string[] = [];
+  
+      // Filter and process appointments
+      Object.keys(appointments)
+        .filter(key => key.startsWith(doctorId)) // Filter appointments for specific doctor
+        .forEach(key => {
+          // Lấy phần timestamp từ key (bỏ qua doctorId)
+          const timeStamp = key.substring(2); // Lấy từ vị trí thứ 2 trở đi
+          disabledTimes.push(timeStamp);
+        });
+  
+      return disabledTimes;
+    } catch (error) {
+      console.error("Error fetching disabled times:", error);
+      return [];
+    }
+  }
 }
 
 

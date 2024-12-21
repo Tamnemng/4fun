@@ -24,17 +24,13 @@ interface TimeAndDateSelection {
 export class WelcomeFormComponent implements OnInit {
   currentPage = 1;
   pageSize = 18;
-  readonly filteredDoctors$ = this.store.filteredDoctors$;
+  readonly filteredDoctors$ = this.store.filteredDoctorsDate$;
   steps = 0;
   isVisible = false;
   selectedDoctor: string | null = null;
   selectedDoctorFullName: string | null = null;
   @ViewChild(TimePickerComponent)
   timePickerComponent!: TimePickerComponent;
-  disableTime = [
-    '241204 14:30',
-    '241204 15:00'
-  ]
   form = new UntypedFormGroup({
     selectedType: new UntypedFormControl(null, [Validators.required]),
     comment: new UntypedFormControl(null, [Validators.required, Validators.maxLength(500)]),
@@ -121,14 +117,37 @@ export class WelcomeFormComponent implements OnInit {
   }
 
   oncontinue(): void {
-    // Validate current step before continuing
     if (this.isCurrentStepValid()) {
+      if (this.steps === 0) {
+        const selectedType = this.form.get('selectedType')?.value;
+        const selectedDate = this.form.get('selectedDate')?.value;
+        const selectedTime = this.form.get('selectedTime')?.value;
+  
+        if (selectedDate && selectedTime) {
+          const date = new Date(selectedDate);
+          const [hours, minutes] = selectedTime.split(':').map(Number);
+          date.setHours(hours, minutes);
+  
+          const yy = String(date.getFullYear()).slice(-2);
+          const mm = String(date.getMonth() + 1).padStart(2, '0');
+          const dd = String(date.getDate()).padStart(2, '0');
+          const hh = String(date.getHours()).padStart(2, '0');
+          const min = String(date.getMinutes()).padStart(2, '0');
+          const formattedTime = `${yy}${mm}${dd}${hh}${min}`;
+  
+          console.log('Formatted Time:', formattedTime);
+          this.store.setWelcomeFilter(selectedType, formattedTime);
+        } else {
+          this.store.setWelcomeFilter(selectedType, '');
+        }
+      }
       this.steps++;
-      this.store.setFiltersTag(this.form.get('selectedType')?.value);
     } else {
       this.markCurrentStepControlsAsDirty();
     }
   }
+  
+  
 
   private isCurrentStepValid(): boolean {
     // Add validation logic based on current step
