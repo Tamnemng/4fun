@@ -19,7 +19,7 @@ export class DoctorWelcomeBarChartComponent {
   private readonly STATUS_LABELS = {
     [AppointmentStatus.CANCEL]: 'Cancelled',
     [AppointmentStatus.READY]: 'Ready',
-    [AppointmentStatus.ENDING]: 'Ending Soon',
+    [AppointmentStatus.ENDING]: 'Ended',
   };
 
   private readonly COLORS = {

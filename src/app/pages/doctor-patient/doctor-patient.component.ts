@@ -37,9 +37,9 @@ export class DoctorPatientComponent {
     }
   }
 
-  openAppointmentDrawer(patient: User) {
+   async openAppointmentDrawer(patient: User) {
     this.selectedPatient = patient;
-    this.patientAppointments = patient.appointments || [];
+    this.patientAppointments = await this.userDataService.getAppointmentsId(patient.uid);
     this.drawerVisible = true;
   }
 
