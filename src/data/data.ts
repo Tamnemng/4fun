@@ -26,6 +26,7 @@ export interface DoctorAppointment {
 }
 
 export interface User {
+  uid: string;
   id: string;
   name: string;
   phoneNumber: string;
@@ -99,7 +100,7 @@ export class UserDataService {
         return Object.entries(users)
           .filter(([_, userData]) => !userData.id)
           .map(([uid, userData]) => ({
-            uid,
+            uid: uid,
             id: '',
             name: userData.name || '',
             phoneNumber: userData.phoneNumber || '',
@@ -129,6 +130,8 @@ export class UserDataService {
       return [];
     }
   }
+
+
 
   private fetchUserData(uid: string) {
     const userRef = ref(db, `users/${uid}`);
@@ -206,6 +209,34 @@ export class UserDataService {
     }
   }
 
+  async getAppointmentsId(id: string): Promise<AppointmentData[]> {
+    const appointmentsRef = ref(db, `appointments`);
+    console.log('true1');
+
+    try {
+      const snapshot = await get(appointmentsRef);
+      if (!snapshot.exists()) return [];
+  
+      return Object.entries(snapshot.val() || {})
+        .filter(([_, appointmentData]: [string, any]) =>
+          appointmentData.uid === id
+        )
+        .map(([_, appointmentData]: [string, any]) => {
+          console.log('true');
+          return {
+            appointmentDate: appointmentData.appointmentDate,
+            appointmentTime: appointmentData.appointmentTime,
+            doctorName: appointmentData.doctorName,
+            createdAt: appointmentData.createdAt,
+            healthCondition: appointmentData.healthCondition
+          };
+        });
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+      return [];
+    }
+  }
+
   async getAppointmentsHistory(): Promise<Appointment[]> {
     const uid = this.getCurrentUserUid();
     const appointmentsRef = ref(db, `appointments`);
@@ -235,6 +266,8 @@ export class UserDataService {
       return [];
     }
   }
+
+
 
   private async markAppointmentAsMet(uid: string, appointmentKey: string): Promise<void> {
     const appointmentRef = ref(db, `users/${uid}/appointments/${appointmentKey}`);

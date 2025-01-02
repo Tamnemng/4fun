@@ -26,6 +26,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly turn$ = this.mainStore.turn$;
   // Sử dụng BehaviorSubject để theo dõi thay đổi của user
   private userSubject = new BehaviorSubject<User>({
+    uid: '',
     id: '',
     name: '',
     phoneNumber: '',
@@ -55,6 +56,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       if (userData) {
         // Tạo user mới với thông tin được cập nhật
         const updatedUser: User = {
+          uid: userData.uid || '',
           id: userData.id || '',
           name: userData.name || '',
           phoneNumber: userData.phoneNumber || '',
@@ -68,6 +70,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       } else {
         // Reset user nếu không có dữ liệu
         this.userSubject.next({
+          uid: '',
           id: '',
           name: '',
           phoneNumber: '',
@@ -80,6 +83,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       console.error('Error fetching user data:', error);
       // Reset user trong trường hợp có lỗi
       this.userSubject.next({
+        uid: '',
         id: '',
         name: '',
         phoneNumber: '',
@@ -94,6 +98,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.userSubscription = this.data.getUserData().subscribe(userData => {
       if (userData) {
         const updatedUser = {
+          uid: userData.uid || '',
           id: '',
           name: userData.name || '',
           phoneNumber: userData.phoneNumber || '',
@@ -106,6 +111,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       } else {
         // Reset user nếu không có dữ liệu
         this.userSubject.next({
+          uid: '',
           id: '',
           name: '',
           phoneNumber: '',
