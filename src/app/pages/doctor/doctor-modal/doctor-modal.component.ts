@@ -18,7 +18,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { EmailVerificationService } from '../../../../component/email';
 import { HeaderComponent } from '../../header/header.component';
 import { MainStore } from '../../main-app.component.store';
-
+import { PaymentModalComponent } from '../../header/purchase-drawer/purchase-drawer.component';
 interface TimeAndDateSelection {
   time: string;
   date: Date;
@@ -38,7 +38,8 @@ interface TimeAndDateSelection {
     NzInputModule,
     TimePickerComponent,
     NzTextareaCountComponent,
-    NzLayoutModule
+    NzLayoutModule,
+    PaymentModalComponent
   ],
   templateUrl: './doctor-modal.component.html',
   styleUrl: './doctor-modal.component.css',
@@ -53,7 +54,7 @@ export class DoctorModalComponent implements OnInit, OnDestroy {
   doctor: string = '';
   doctorId: string = '';
   @ViewChild(TimePickerComponent) timePickerComponent!: TimePickerComponent;
-
+  @ViewChild('paymentModal') paymentModal!: PaymentModalComponent;
   form = new UntypedFormGroup({
     comment: new UntypedFormControl(null, [Validators.required, Validators.maxLength(500)]),
     selectedDate: new UntypedFormControl(null, [Validators.required]),
@@ -136,46 +137,63 @@ export class DoctorModalComponent implements OnInit, OnDestroy {
         selectedTime: this.form.get('selectedTime')?.value,
         comment: this.form.get('comment')?.value
       };
-      this.message
-        .loading('Action in progress', { nzDuration: 2500 })
-        .onClose!.pipe(
-          concatMap(() => {
-            const uid = this.userDataService.getCurrentUserUid();
-            if (formData.selectedDate) {
-              return this.userDataService.createAppointment(uid, this.doctorId, this.doctor, formData.selectedTime, formData.selectedDate, formData.comment);
-            } else {
-              throw new Error('Selected date is null');
-            }
-          }),
-          concatMap((appointmentId) => {
-            // this.turn.setTurn();
-            const email = this.userDataService.getCurrentUserEmail();
-            const name = this.userDataService.getCurrentUserName();
-            this.emailVerificationService.sendAppointmentEmail(
-              email,
-              name,
-              appointmentId,
-              formData.selectedDate.toLocaleDateString(),
-              formData.selectedTime,
-              this.doctor
-            );
-            return this.message.success('Appointment registered successfully', { nzDuration: 2500 }).onClose!;
-          }),
-          catchError((error) => {
-            switch (error.message) {
-              case 'No turns available':
-                this.message.error('You do not have enough turns to book an appointment');
-                break;
-              default:
-                this.message.error('Failed to register appointment. Please try again.');
-            }
-            return this.message.error('Failed to register appointment', { nzDuration: 2500 }).onClose!;
-          })
-        )
-        .subscribe(() => {
-          this.turn.setTurn();
-        });
-      this.onClose();
+
+      // Show payment modal first
+      this.paymentModal.open();
+
+      // Subscribe to payment completion
+      this.paymentModal.onPaymentComplete().subscribe(
+        (success) => {
+          if (success) {
+            this.message
+              .loading('Action in progress', { nzDuration: 2500 })
+              .onClose!.pipe(
+                concatMap(() => {
+                  const uid = this.userDataService.getCurrentUserUid();
+                  if (formData.selectedDate) {
+                    return this.userDataService.createAppointment(
+                      uid, 
+                      this.doctorId, 
+                      this.doctor, 
+                      formData.selectedTime, 
+                      formData.selectedDate, 
+                      formData.comment
+                    );
+                  } else {
+                    throw new Error('Selected date is null');
+                  }
+                }),
+                concatMap((appointmentId) => {
+                  const email = this.userDataService.getCurrentUserEmail();
+                  const name = this.userDataService.getCurrentUserName();
+                  this.emailVerificationService.sendAppointmentEmail(
+                    email,
+                    name,
+                    appointmentId,
+                    formData.selectedDate.toLocaleDateString(),
+                    formData.selectedTime,
+                    this.doctor
+                  );
+                  return this.message.success('Đăng ký khám thành công!', { nzDuration: 2500 }).onClose!;
+                }),
+                catchError((error) => {
+                  switch (error.message) {
+                    case 'No turns available':
+                      this.message.error('Bạn không đủ lượt để đặt lịch khám');
+                      break;
+                    default:
+                      this.message.error('Đăng ký không thành công. Vui lòng thử lại.');
+                  }
+                  return this.message.error('Đăng ký không thành công', { nzDuration: 2500 }).onClose!;
+                })
+              )
+              .subscribe(() => {
+                this.turn.setTurn();
+                this.onClose();
+              });
+          }
+        }
+      );
     } else {
       Object.keys(this.form.controls).forEach(key => {
         const control = this.form.get(key);

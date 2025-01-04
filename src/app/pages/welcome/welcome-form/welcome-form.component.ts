@@ -9,6 +9,7 @@ import { EmailVerificationService } from '../../../../component/email';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { HeaderComponent } from '../../header/header.component';
 import { MainStore } from '../../main-app.component.store';
+import { PaymentModalComponent } from '../../header/purchase-drawer/purchase-drawer.component';
 interface TimeAndDateSelection {
   time: string;
   date: Date;
@@ -22,6 +23,8 @@ interface TimeAndDateSelection {
   providers: [System, UserDataService, DoctorStore, TimePickerComponent, HeaderComponent],
 })
 export class WelcomeFormComponent implements OnInit {
+  @ViewChild('paymentModal') paymentModal!: PaymentModalComponent;
+  total = 0;
   currentPage = 1;
   pageSize = 18;
   readonly filteredDoctors$ = this.store.filteredDoctorsDate$;
@@ -55,6 +58,11 @@ export class WelcomeFormComponent implements OnInit {
     private header: HeaderComponent,
     private turn: MainStore
   ) {
+    this.filteredDoctors$.subscribe(doctors => {
+      if (!doctors || doctors.length === 0) {
+        this.total = doctors.length;
+      }
+    });
   }
 
   resetForm(): void {
@@ -80,20 +88,20 @@ export class WelcomeFormComponent implements OnInit {
   // Handle time and date selection from TimePickerComponent
   onTimeAndDateChange(selection: { time: string, date: Date } | null): void {
     console.log('Selection received:', selection);
-    
+
     if (selection) {
       console.log('Date:', selection.date);
       console.log('Time:', selection.time);
-      
-      this.form.patchValue({ 
-        selectedDate: selection.date, 
-        selectedTime: selection.time 
+
+      this.form.patchValue({
+        selectedDate: selection.date,
+        selectedTime: selection.time
       });
     } else {
       console.log('Selection is null');
-      this.form.patchValue({ 
-        selectedDate: null, 
-        selectedTime: null 
+      this.form.patchValue({
+        selectedDate: null,
+        selectedTime: null
       });
     }
   }
@@ -122,19 +130,19 @@ export class WelcomeFormComponent implements OnInit {
         const selectedType = this.form.get('selectedType')?.value;
         const selectedDate = this.form.get('selectedDate')?.value;
         const selectedTime = this.form.get('selectedTime')?.value;
-  
+
         if (selectedDate && selectedTime) {
           const date = new Date(selectedDate);
           const [hours, minutes] = selectedTime.split(':').map(Number);
           date.setHours(hours, minutes);
-  
+
           const yy = String(date.getFullYear()).slice(-2);
           const mm = String(date.getMonth() + 1).padStart(2, '0');
           const dd = String(date.getDate()).padStart(2, '0');
           const hh = String(date.getHours()).padStart(2, '0');
           const min = String(date.getMinutes()).padStart(2, '0');
           const formattedTime = `${yy}${mm}${dd}${hh}${min}`;
-  
+
           console.log('Formatted Time:', formattedTime);
           this.store.setWelcomeFilter(selectedType, formattedTime);
         } else {
@@ -142,12 +150,13 @@ export class WelcomeFormComponent implements OnInit {
         }
       }
       this.steps++;
+
     } else {
       this.markCurrentStepControlsAsDirty();
     }
   }
-  
-  
+
+
 
   private isCurrentStepValid(): boolean {
     // Add validation logic based on current step
@@ -196,12 +205,28 @@ export class WelcomeFormComponent implements OnInit {
         ...this.form.value,
         selectedDoctorFullName: this.selectedDoctorFullName
       };
-  
+
       try {
+        // First show payment modal and wait for completion
+        this.paymentModal.open();
+
+        // Create a promise to handle payment completion
+        const paymentResult = await new Promise<boolean>((resolve) => {
+          this.paymentModal.paymentCompleted.subscribe((success) => {
+            resolve(success);
+          });
+        });
+
+        if (!paymentResult) {
+          this.message.error('Payment was not completed. Please try again.');
+          return;
+        }
+
+        // If payment successful, proceed with appointment creation
         const userName = this.userDataService.getCurrentUserName();
         const uid = this.userDataService.getCurrentUserUid();
         const userEmail = this.userDataService.getCurrentUserEmail();
-  
+
         const appointmentId = await this.userDataService.createAppointment(
           uid,
           this.selectedDoctor!,
@@ -210,7 +235,7 @@ export class WelcomeFormComponent implements OnInit {
           formData.selectedDate,
           formData.comment
         );
-  
+
         const emailSent = await this.emailVerificationService.sendAppointmentEmail(
           userEmail,
           userName,
@@ -219,7 +244,7 @@ export class WelcomeFormComponent implements OnInit {
           formData.selectedTime,
           this.selectedDoctorFullName!
         );
-  
+
         if (emailSent) {
           this.message.success('Appointment registered successfully');
           this.isVisible = false;

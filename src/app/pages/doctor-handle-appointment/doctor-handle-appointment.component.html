@@ -43,7 +43,13 @@
           </nz-tag>
         </td>
         <td style="width: 300px">
-          <a nz-button nzType="link" (click)="openMeeting(data.id)">Make a appointment</a>
+          <a nz-button 
+          nzType="link" 
+          [disabled]="!canOpenMeeting(data.date, data.time)"
+          (click)="openMeeting(data.id)"
+          [ngStyle]="!canOpenMeeting(data.date, data.time) ? {'color': '#ccc', 'cursor': 'not-allowed'} : {}">
+         Make a appointment
+       </a>
         </td>
         } @for (emptyRow of getEmptyRows(7 - basicTable.data.length); track
         emptyRow) {

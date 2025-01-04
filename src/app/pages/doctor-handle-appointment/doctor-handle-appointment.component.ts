@@ -111,6 +111,30 @@ export class DoctorHandleAppointmentComponent implements OnInit, OnDestroy {
     return new Array(count).fill(null);
   }
 
+  canOpenMeeting(appointmentDate: Date, appointmentTime: string): boolean {
+    const now = new Date();
+    const appointmentDateTime = new Date(appointmentDate);
+    
+    // Set the appointment time
+    const [hours, minutes] = appointmentTime.split(':').map(Number);
+    appointmentDateTime.setHours(hours, minutes, 0, 0);
+    
+    // Check if it's the same day
+    const isSameDay = now.getDate() === appointmentDateTime.getDate() &&
+                     now.getMonth() === appointmentDateTime.getMonth() &&
+                     now.getFullYear() === appointmentDateTime.getFullYear();
+    
+    if (!isSameDay) {
+      return false;
+    }
+    
+    // Calculate time difference in minutes
+    const timeDiff = Math.abs(now.getTime() - appointmentDateTime.getTime()) / (1000 * 60);
+    
+    // Return true if time difference is 5 minutes or less
+    return timeDiff <= 5;
+  }
+
   openMeeting(id: string) {
     this.store.setIsMeeting(true);
     this.store.updateMeetingValue(id);

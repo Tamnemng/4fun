@@ -1,5 +1,5 @@
 <div class="header">
-  <div style="color: white" *ngIf="(role$ | async) === 'bn'" >
+  <!-- <div style="color: white" *ngIf="(role$ | async) === 'bn'" >
     <span
       nz-tooltip
       nzTooltipTitle="This is a number of turn that you can book a doctor."
@@ -9,7 +9,7 @@
     <a nz-button nzType="text" style="margin-left: 10px" (click)="openDrawer()">
       <span nz-icon nzType="plus" nzTheme="outline"></span>
     </a>
-  </div>
+  </div> -->
   <div class="user-info">
     <a nz-dropdown [nzDropdownMenu]="menu">
       {{ (user$ | async)?.name }} <i nz-icon nzType="down"></i>
@@ -36,4 +36,3 @@
     </nz-dropdown-menu>
   </div>
 </div>
-<app-purchase-drawer></app-purchase-drawer>

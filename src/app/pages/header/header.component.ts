@@ -6,7 +6,6 @@ import { UserDataService, User } from '../../../data/data';
 import { BehaviorSubject, catchError, from, of, Subscription, switchMap } from 'rxjs';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
-import { PurchaseDrawerComponent } from './purchase-drawer/purchase-drawer.component';
 import { MainStore } from '../main-app.component.store';
 
 @Component({
@@ -14,14 +13,11 @@ import { MainStore } from '../main-app.component.store';
   standalone: true,
   imports: [CommonModule, NzDropDownModule, NzIconModule, NzToolTipModule,
     NzButtonComponent,
-    PurchaseDrawerComponent
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
-  providers: [PurchaseDrawerComponent]
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  @ViewChild(PurchaseDrawerComponent) drawerComponent!: PurchaseDrawerComponent;
   readonly role$ = this.mainStore.role$;
   readonly turn$ = this.mainStore.turn$;
   // Sử dụng BehaviorSubject để theo dõi thay đổi của user
@@ -132,9 +128,5 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
-  }
-
-  openDrawer() {
-    this.drawerComponent.open();
   }
 }

@@ -30,6 +30,8 @@ import { WelcomeComponent } from './welcome.component';
 import { NzImageModule } from 'ng-zorro-antd/image';
 import { WelcomeFormComponent } from './welcome-form/welcome-form.component';
 import { TimePickerComponent } from '../doctor/time-picker/time-picker.component';
+import { PaymentModalComponent } from '../header/purchase-drawer/purchase-drawer.component';
+
 const NzModules = [
   NzImageModule,
   NzIconModule,
@@ -66,6 +68,7 @@ const NzModules = [
     ...NzModules,
     TimePickerComponent,
     ReactiveFormsModule,
+    PaymentModalComponent,
     RouterModule.forChild([
       {
         path: '',

@@ -289,10 +289,10 @@ export class UserDataService {
     // Ensure turn is a valid number
     const currentTurn = await this.getTurn() || 0;
 
-    // Check if turn is a valid number and greater than 0
-    if (!Number.isInteger(currentTurn) || currentTurn <= 0) {
-      throw new Error('No turns available');
-    }
+    // // Check if turn is a valid number and greater than 0
+    // if (!Number.isInteger(currentTurn) || currentTurn <= 0) {
+    //   throw new Error('No turns available');
+    // }
 
     const appointmentId = this.generateAppointmentId(date, time, doctorId)
     const globalAppointmentRef = ref(db, `appointments/${appointmentId}`);

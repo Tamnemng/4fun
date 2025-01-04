@@ -8,6 +8,7 @@ import { combineLatest } from "rxjs";
 export interface DoctorState {
   filter_tag: string;
   filter_search: string;
+  is_continue: boolean;
   filter_date: string;
   search_data: string;
   data: Doctor[];
@@ -20,6 +21,7 @@ export interface DoctorState {
 
 const initialState: DoctorState = {
   total_doctors: 0,
+  is_continue: false,
   timeDisable: [],
   filter_date: '',
   filter_tag: 'all',
@@ -46,6 +48,7 @@ export class DoctorStore {
   readonly modal_value$: Observable<Doctor>
   readonly initial_tag$: Observable<string>;
   readonly total_doctors$: Observable<number>;
+  readonly is_continue$: Observable<boolean>;
   readonly data$: Observable<Doctor[]>;
   readonly filter_tag$: Observable<string>;
   readonly filter_date$: Observable<string>;
@@ -69,23 +72,35 @@ export class DoctorStore {
     this.search_data$ = this.store.select(state => state.search_data);
     this.is_modal$ = this.store.select(state => state.is_modal);
     this.modal_value$ = this.store.select(state => state.modal_value);
+    this.is_continue$ = this.store.select(state => state.is_continue);
     this.filteredDoctorsDate$ = combineLatest([this.data$, this.filter_tag$, this.filter_date$]).pipe(
       switchMap(async ([doctors, tag, date]) => {
-        const availableDoctors = [];
-        for (const doctor of doctors) {
-          const tagMatch = tag === 'all' || doctor?.tag === tag;
-          
-          if (tagMatch) {
-            const disabledTimes = await this.getTimeDisable(doctor.id);
-            const isTimeAvailable = !disabledTimes.includes(date);
+        if (!doctors || !Array.isArray(doctors)) {
+          return [];
+        }
     
-            if (isTimeAvailable) {
-              availableDoctors.push(doctor);
+        try {
+          const availableDoctors = [];
+          for (const doctor of doctors) {
+            if (doctor && doctor.id && doctor.tag) {
+              const tagMatch = tag === 'all' || doctor.tag === tag;
+              
+              if (tagMatch) {
+                const disabledTimes = await this.getTimeDisable(doctor.id);
+                const isTimeAvailable = !date || !disabledTimes.includes(date);
+        
+                if (isTimeAvailable) {
+                  availableDoctors.push(doctor);
+                }
+              }
             }
           }
+          
+          return availableDoctors;
+        } catch (error) {
+          console.error('Error filtering doctors:', error);
+          return [];
         }
-        
-        return availableDoctors;
       })
     );
     this.filteredDoctors$ = combineLatest([this.data$, this.filter_tag$, this.filter_search$]).pipe(
